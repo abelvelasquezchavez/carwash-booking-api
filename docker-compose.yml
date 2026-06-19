@@ -1,0 +1,43 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: carwash-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: carwash
+      MYSQL_USER: carwash
+      MYSQL_PASSWORD: carwash
+    ports:
+      - "3306:3306"
+    volumes:
+      - carwash_mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  # Optional: run the API itself in a container.
+  # Enable with `docker compose --profile app up`.
+  api:
+    build: .
+    container_name: carwash-api
+    restart: unless-stopped
+    profiles: ["app"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PORT: 3000
+      NODE_ENV: production
+      DATABASE_URL: "mysql://carwash:carwash@mysql:3306/carwash"
+      JWT_SECRET: "change-me-to-a-long-random-secret"
+      JWT_EXPIRES_IN: "1d"
+      BUSINESS_OPEN: 8
+      BUSINESS_CLOSE: 18
+    ports:
+      - "3000:3000"
+
+volumes:
+  carwash_mysql_data:

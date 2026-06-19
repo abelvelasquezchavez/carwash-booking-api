@@ -1,0 +1,84 @@
+// Prisma schema for the Car Wash Booking API.
+// Column names are snake_case (@map) and table names are pluralized snake_case (@@map).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+/// The business owner / admin (a single user: my grandfather). Authenticates via JWT.
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String // bcrypt hash
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+/// Catalogue of services offered (basic wash, waxing, interior detailing, ...).
+model Service {
+  id              Int       @id @default(autoincrement())
+  name            String
+  description     String?   @db.Text
+  price           Decimal   @db.Decimal(10, 2)
+  durationMinutes Int       @map("duration_minutes")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@map("services")
+}
+
+/// A customer served at their home address.
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String
+  address   String
+  zone      String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  bookings Booking[]
+
+  @@map("customers")
+}
+
+/// A scheduled wash. endTime is derived from the service duration, never sent by the client.
+model Booking {
+  id        Int           @id @default(autoincrement())
+  startTime DateTime      @map("start_time")
+  endTime   DateTime      @map("end_time")
+  status    BookingStatus @default(PENDING)
+  notes     String?       @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+  updatedAt DateTime      @updatedAt @map("updated_at")
+
+  serviceId Int     @map("service_id")
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  customerId Int      @map("customer_id")
+  customer   Customer @relation(fields: [customerId], references: [id])
+
+  // Speeds up overlap / availability lookups.
+  @@index([startTime, endTime])
+  @@index([status])
+  @@index([serviceId])
+  @@index([customerId])
+  @@map("bookings")
+}
