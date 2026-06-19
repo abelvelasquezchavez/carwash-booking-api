@@ -19,6 +19,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `GET /api/reports/pending` — unpaid bookings with days outstanding + total owed.
   - `GET /api/reports/revenue?from=&to=` — collected revenue by payment method.
 - Tests for payment registration, the 409 on double payment, and both reports.
+- **Database seed** (`prisma/seed.ts`, `npm run prisma:seed`) with realistic
+  sample data: an admin (hashed with the same bcrypt helper as auth, so login
+  works), the service catalogue, customers, and a mix of bookings — including
+  paid and unpaid ones so the reports return data.
 
 ## [1.0.0] - 2026-06-19
 

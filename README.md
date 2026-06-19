@@ -161,7 +161,24 @@ docker compose up -d mysql
 npm run prisma:migrate   # creates tables from prisma/schema.prisma
 ```
 
-### 5. Run the API
+### 5. Seed example data (optional)
+
+```bash
+npm run prisma:seed      # admin, services, customers and a mix of bookings
+```
+
+This loads realistic sample data, including an admin you can log in with:
+
+| Field    | Value                |
+| -------- | -------------------- |
+| Email    | `abuelo@carwash.com` |
+| Password | `carwash123`         |
+
+The seed hashes the password with the **same bcrypt helper as the auth flow**, so
+`POST /api/auth/login` works out of the box. It also creates paid and unpaid
+bookings so `/reports/pending` and `/reports/revenue` return meaningful numbers.
+
+### 6. Run the API
 
 ```bash
 npm run dev              # hot-reload (tsx)
@@ -369,6 +386,7 @@ Covered scenarios include:
 | `npm run test:watch`    | Run tests in watch mode.                 |
 | `npm run type-check`    | `tsc --noEmit`.                          |
 | `npm run prisma:migrate`| Create/apply a dev migration.            |
+| `npm run prisma:seed`   | Load example data (admin, services, …).  |
 | `npm run prisma:studio` | Open Prisma Studio.                      |
 
 ---
