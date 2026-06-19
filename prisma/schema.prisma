@@ -17,6 +17,19 @@ enum BookingStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  UNPAID
+  PAID
+}
+
+enum PaymentMethod {
+  CASH
+  TRANSFER
+  YAPE
+  PLIN
+  CARD
+}
+
 /// The business owner / admin (a single user: my grandfather). Authenticates via JWT.
 model User {
   id        Int      @id @default(autoincrement())
@@ -69,16 +82,41 @@ model Booking {
   createdAt DateTime      @default(now()) @map("created_at")
   updatedAt DateTime      @updatedAt @map("updated_at")
 
+  // Billing. `amount` is frozen from service.price at creation time so the
+  // receivable keeps its value even if the catalogue price changes later.
+  paymentStatus PaymentStatus @default(UNPAID) @map("payment_status")
+  amount        Decimal       @db.Decimal(10, 2)
+
   serviceId Int     @map("service_id")
   service   Service @relation(fields: [serviceId], references: [id])
 
   customerId Int      @map("customer_id")
   customer   Customer @relation(fields: [customerId], references: [id])
 
+  // Optional 1:1 — only exists once the charge is actually collected.
+  payment Payment?
+
   // Speeds up overlap / availability lookups.
   @@index([startTime, endTime])
   @@index([status])
+  @@index([paymentStatus])
   @@index([serviceId])
   @@index([customerId])
   @@map("bookings")
+}
+
+/// A collected payment for a booking. Created only when the charge is recorded.
+model Payment {
+  id        Int           @id @default(autoincrement())
+  bookingId Int           @unique @map("booking_id")
+  booking   Booking       @relation(fields: [bookingId], references: [id])
+  method    PaymentMethod
+  amount    Decimal       @db.Decimal(10, 2)
+  paidAt    DateTime      @map("paid_at")
+  notes     String?       @db.Text
+  createdAt DateTime      @default(now()) @map("created_at")
+
+  @@index([paidAt])
+  @@index([method])
+  @@map("payments")
 }
