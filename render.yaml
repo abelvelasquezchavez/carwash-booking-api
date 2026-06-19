@@ -18,7 +18,7 @@ services:
     # Install -> generate client -> compile -> apply migrations (production-safe).
     # We use `migrate deploy` (NOT `migrate dev`): it is non-interactive, never
     # creates/edits migrations, and never resets data.
-    buildCommand: npm ci && npm run prisma:generate && npm run build && npx prisma migrate deploy
+    buildCommand: npm ci --include=dev && npm run prisma:generate && npm run build && npx prisma migrate deploy
 
     startCommand: npm start
 
