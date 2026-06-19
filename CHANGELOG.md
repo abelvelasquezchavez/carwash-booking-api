@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Payments & receivables** (optional charging — never blocks a booking):
+  - `Booking` gains `paymentStatus` (UNPAID|PAID) and a frozen `amount`
+    (captured from `service.price` at creation).
+  - New `Payment` entity (1:1 optional with `Booking`) with `method`
+    (CASH|TRANSFER|YAPE|PLIN|CARD), `amount`, `paidAt` and `notes`.
+  - `PATCH /api/bookings/:id/payment` — records a payment and marks the booking
+    PAID atomically; amount defaults to the booking amount; paying twice → 409.
+  - `GET /api/reports/pending` — unpaid bookings with days outstanding + total owed.
+  - `GET /api/reports/revenue?from=&to=` — collected revenue by payment method.
+- Tests for payment registration, the 409 on double payment, and both reports.
+
 ## [1.0.0] - 2026-06-19
 
 ### Added

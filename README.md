@@ -28,6 +28,14 @@ matter as much as the feature set.
     `→ CANCELLED` from any non-terminal state).
 - **Availability engine** — given a day and a service, returns the free time slots,
   excluding anything already booked.
+- **Payments & receivables (optional)** — charging never blocks a booking. A booking
+  is born `UNPAID` and can be settled later (customers sometimes pay late):
+  - 💰 **Record a payment** (`PATCH /bookings/:id/payment`) — creates a `Payment`,
+    marks the booking `PAID`; paying twice → `409`.
+  - 🧊 **Frozen amount** — the bookable `amount` is captured from `service.price` at
+    creation, so old receivables keep their value if the catalogue price changes.
+  - 📋 **Receivables report** (`/reports/pending`) — unpaid bookings + total owed.
+  - 📈 **Revenue report** (`/reports/revenue`) — collected income by method.
 - **Consistent response envelope**, centralized error handling, fail-fast config
   validation and graceful shutdown.
 
@@ -102,10 +110,17 @@ Customer (served at home)
 
 Booking
   id · startTime · endTime (DERIVED) · status (enum) · notes? · timestamps
+  paymentStatus (enum) · amount (Decimal, FROZEN from service.price)
   ├── belongs to Service
-  └── belongs to Customer
+  ├── belongs to Customer
+  └── has one Payment (optional, 1:1)
+
+Payment (only exists once the charge is collected)
+  id · bookingId (unique) · method (enum) · amount (Decimal) · paidAt · notes? · createdAt
 
 BookingStatus = PENDING | CONFIRMED | COMPLETED | CANCELLED
+PaymentStatus = UNPAID | PAID
+PaymentMethod = CASH | TRANSFER | YAPE | PLIN | CARD
 ```
 
 Columns use `snake_case` (`@map`) and tables are pluralized `snake_case` (`@@map`).
@@ -197,7 +212,10 @@ All routes are prefixed with `/api`. Protected routes require an
 | POST   | `/bookings`                   |  🔒  | Create a booking (anti-overbooking).         |
 | GET    | `/bookings/:id`               |  🔒  | Get one booking.                             |
 | PATCH  | `/bookings/:id/status`        |  🔒  | Change booking status (validated).           |
+| PATCH  | `/bookings/:id/payment`       |  🔒  | Record a payment, mark the booking PAID.     |
 | GET    | `/availability`               |  🔒  | Free slots (`?date=&serviceId=`).            |
+| GET    | `/reports/pending`            |  🔒  | Unpaid bookings + total owed.                |
+| GET    | `/reports/revenue`            |  🔒  | Collected revenue (`?from=&to=`), by method. |
 
 ### Response envelopes
 
@@ -281,6 +299,34 @@ curl -s -X PATCH http://localhost:3000/api/bookings/1/status \
   -d '{"status":"CONFIRMED"}'
 ```
 
+### 8. Record a payment (optional — can happen days later)
+
+```bash
+# amount defaults to the booking's frozen amount; paidAt defaults to now
+curl -s -X PATCH http://localhost:3000/api/bookings/1/payment \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"method":"YAPE","notes":"Paid via Yape"}'
+# -> booking is now { "paymentStatus": "PAID", "payment": { "method": "YAPE", ... } }
+```
+
+### 9. Review receivables and revenue
+
+```bash
+# Who still owes money, and how much in total
+curl -s http://localhost:3000/api/reports/pending \
+  -H "Authorization: Bearer $TOKEN"
+# -> { "data": [ { "bookingId": 2, "amount": "25.00", "daysOld": 4, ... } ],
+#      "summary": { "count": 1, "totalDue": "25.00" } }
+
+# Collected revenue in July, broken down by method
+curl -s -G http://localhost:3000/api/reports/revenue \
+  -H "Authorization: Bearer $TOKEN" \
+  --data-urlencode 'from=2026-07-01' \
+  --data-urlencode 'to=2026-07-31'
+# -> { "data": { "total": "25.00", "byMethod": { "YAPE": "25.00", "CASH": "0.00", ... } } }
+```
+
 ---
 
 ## ✅ Testing
@@ -305,6 +351,10 @@ Covered scenarios include:
 - Writing without a token → `401`
 - Availability returns correct slots, excluding occupied ones
 - Booking status transition validation
+- Successful payment (booking → `PAID`, `Payment` created)
+- Paying an already-paid booking → `409`
+- `/reports/pending` lists only unpaid bookings and totals the amount owed
+- `/reports/revenue` sums and breaks revenue down by payment method
 
 ---
 
