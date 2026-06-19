@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sample data: an admin (hashed with the same bcrypt helper as auth, so login
   works), the service catalogue, customers, and a mix of bookings — including
   paid and unpaid ones so the reports return data.
+- **Deployment** — `render.yaml` Blueprint (Render web service; build runs
+  `prisma migrate deploy`, not `migrate dev`) and `DEPLOYMENT.md` documenting the
+  TiDB Cloud `DATABASE_URL` + SSL format, CA-certificate handling, the
+  initial-migration prerequisite, and a free-tier uptime keep-alive.
 
 ## [1.0.0] - 2026-06-19
 

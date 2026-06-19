@@ -1,0 +1,43 @@
+# Render Blueprint — https://render.com/docs/blueprint-spec
+# Deploys the Car Wash Booking API as a Node web service.
+#
+# IMPORTANT: `prisma migrate deploy` only APPLIES migrations that already exist
+# under prisma/migrations — it never generates them. Create and commit the
+# initial migration locally first (see DEPLOYMENT.md), otherwise the build runs
+# but no tables are created.
+
+services:
+  - type: web
+    name: carwash-booking-api
+    runtime: node
+    plan: free
+    region: oregon # pick the region closest to your TiDB Cloud cluster
+    branch: main
+    autoDeploy: true
+
+    # Install -> generate client -> compile -> apply migrations (production-safe).
+    # We use `migrate deploy` (NOT `migrate dev`): it is non-interactive, never
+    # creates/edits migrations, and never resets data.
+    buildCommand: npm ci && npm run prisma:generate && npm run build && npx prisma migrate deploy
+
+    startCommand: npm start
+
+    # Render restarts the instance if this stops returning 2xx.
+    healthCheckPath: /api/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Render injects PORT automatically; the app reads process.env.PORT.
+      - key: JWT_SECRET
+        generateValue: true # Render generates a strong random secret
+      - key: JWT_EXPIRES_IN
+        value: 1d
+      - key: BUSINESS_OPEN
+        value: "8"
+      - key: BUSINESS_CLOSE
+        value: "18"
+      # Set in the Render dashboard (secret). See DEPLOYMENT.md for the exact
+      # TiDB Cloud + SSL format.
+      - key: DATABASE_URL
+        sync: false

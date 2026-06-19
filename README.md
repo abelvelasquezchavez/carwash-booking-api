@@ -391,6 +391,19 @@ Covered scenarios include:
 
 ---
 
+## ☁️ Deployment
+
+The repo ships a [`render.yaml`](./render.yaml) Blueprint to deploy on
+[Render](https://render.com) against a [TiDB Cloud](https://tidbcloud.com)
+(MySQL-compatible) database over SSL. The build runs `prisma migrate deploy`
+(production-safe — never `migrate dev`).
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full guide: the exact TiDB Cloud
+`DATABASE_URL` + SSL format, how to provide the CA certificate if Prisma needs
+it, the required initial-migration step, and a free-tier uptime keep-alive.
+
+---
+
 ## 📄 License
 
 [MIT](./LICENSE) © Abel Velasquez
