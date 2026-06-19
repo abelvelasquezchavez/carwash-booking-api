@@ -1,4 +1,9 @@
-import { BookingStatus, type Prisma } from '@prisma/client';
+import {
+  BookingStatus,
+  type PaymentMethod,
+  type PaymentStatus,
+  type Prisma,
+} from '@prisma/client';
 import {
   type BookingWithRelations,
   bookingRepository,
@@ -27,8 +32,17 @@ export interface BookingDTO {
   endTime: string;
   status: BookingStatus;
   notes: string | null;
+  paymentStatus: PaymentStatus;
+  amount: string;
   service: { id: number; name: string; durationMinutes: number; price: string };
   customer: { id: number; name: string; phone: string };
+  payment: {
+    id: number;
+    method: PaymentMethod;
+    amount: string;
+    paidAt: string;
+    notes: string | null;
+  } | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,12 +61,15 @@ const ALLOWED_TRANSITIONS: Record<BookingStatus, BookingStatus[]> = {
   [BookingStatus.CANCELLED]: [],
 };
 
-const toDTO = (booking: BookingWithRelations): BookingDTO => ({
+/** Maps a booking (with its relations) to the public DTO. Shared with the payment service. */
+export const toBookingDTO = (booking: BookingWithRelations): BookingDTO => ({
   id: booking.id,
   startTime: booking.startTime.toISOString(),
   endTime: booking.endTime.toISOString(),
   status: booking.status,
   notes: booking.notes,
+  paymentStatus: booking.paymentStatus,
+  amount: booking.amount.toFixed(2),
   service: {
     id: booking.service.id,
     name: booking.service.name,
@@ -64,9 +81,20 @@ const toDTO = (booking: BookingWithRelations): BookingDTO => ({
     name: booking.customer.name,
     phone: booking.customer.phone,
   },
+  payment: booking.payment
+    ? {
+        id: booking.payment.id,
+        method: booking.payment.method,
+        amount: booking.payment.amount.toFixed(2),
+        paidAt: booking.payment.paidAt.toISOString(),
+        notes: booking.payment.notes,
+      }
+    : null,
   createdAt: booking.createdAt.toISOString(),
   updatedAt: booking.updatedAt.toISOString(),
 });
+
+const toDTO = toBookingDTO;
 
 const addMinutes = (date: Date, minutes: number): Date =>
   new Date(date.getTime() + minutes * 60_000);
@@ -145,6 +173,8 @@ export const bookingService = {
       startTime,
       endTime,
       notes: input.notes ?? null,
+      // Freeze the price at booking time; it stays put if the catalogue changes.
+      amount: service.price,
       service: { connect: { id: service.id } },
       customer: { connect: { id: customer.id } },
     });

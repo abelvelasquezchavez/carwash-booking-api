@@ -1,4 +1,13 @@
-import { type Booking, BookingStatus, type Customer, Prisma, type Service } from '@prisma/client';
+import {
+  type Booking,
+  BookingStatus,
+  type Customer,
+  type Payment,
+  PaymentMethod,
+  PaymentStatus,
+  Prisma,
+  type Service,
+} from '@prisma/client';
 import { signToken } from '../src/utils/jwt';
 import type { BookingWithRelations } from '../src/repositories/booking.repository';
 
@@ -37,10 +46,23 @@ export const makeBooking = (overrides: Partial<Booking> = {}): Booking => ({
   endTime: new Date('2099-06-01T11:00:00.000Z'),
   status: BookingStatus.PENDING,
   notes: null,
+  paymentStatus: PaymentStatus.UNPAID,
+  amount: new Prisma.Decimal('25.00'),
   serviceId: 1,
   customerId: 1,
   createdAt: EPOCH,
   updatedAt: EPOCH,
+  ...overrides,
+});
+
+export const makePayment = (overrides: Partial<Payment> = {}): Payment => ({
+  id: 1,
+  bookingId: 1,
+  method: PaymentMethod.CASH,
+  amount: new Prisma.Decimal('25.00'),
+  paidAt: new Date('2026-06-19T12:00:00.000Z'),
+  notes: null,
+  createdAt: EPOCH,
   ...overrides,
 });
 
@@ -52,6 +74,7 @@ export const makeBookingWithRelations = (
     ...base,
     service: makeService(),
     customer: makeCustomer(),
+    payment: null,
     ...overrides,
   };
 };

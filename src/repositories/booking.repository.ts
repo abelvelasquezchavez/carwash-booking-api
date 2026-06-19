@@ -7,10 +7,14 @@ import { prisma } from '../config/prisma';
 
 /** A booking joined with the data needed to build a rich DTO. */
 export type BookingWithRelations = Prisma.BookingGetPayload<{
-  include: { service: true; customer: true };
+  include: { service: true; customer: true; payment: true };
 }>;
 
-const includeRelations = { service: true, customer: true } as const;
+const includeRelations = {
+  service: true,
+  customer: true,
+  payment: true,
+} as const;
 
 export const bookingRepository = {
   async listAndCount(args: {
