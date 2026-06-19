@@ -9,7 +9,9 @@ services:
       MYSQL_USER: carwash
       MYSQL_PASSWORD: carwash
     ports:
-      - "3306:3306"
+      # Host port is configurable to avoid clashes with other local MySQLs.
+      # Override with MYSQL_HOST_PORT in your .env (container port stays 3306).
+      - "${MYSQL_HOST_PORT:-3306}:3306"
     volumes:
       - carwash_mysql_data:/var/lib/mysql
     healthcheck:
