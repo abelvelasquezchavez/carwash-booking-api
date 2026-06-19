@@ -5,6 +5,7 @@ import { serviceRoutes } from './service.routes';
 import { customerRoutes } from './customer.routes';
 import { bookingRoutes } from './booking.routes';
 import { availabilityRoutes } from './availability.routes';
+import { reportRoutes } from './report.routes';
 
 export const apiRouter = Router();
 
@@ -14,3 +15,4 @@ apiRouter.use('/services', serviceRoutes);
 apiRouter.use('/customers', customerRoutes);
 apiRouter.use('/bookings', bookingRoutes);
 apiRouter.use('/availability', availabilityRoutes);
+apiRouter.use('/reports', reportRoutes);
