@@ -8,6 +8,7 @@ import {
   listBookingsSchema,
   updateBookingStatusSchema,
 } from '../schemas/booking.schema';
+import { markPaymentSchema } from '../schemas/payment.schema';
 
 export const bookingRoutes = Router();
 
@@ -24,4 +25,9 @@ bookingRoutes.patch(
   '/:id/status',
   validate(updateBookingStatusSchema),
   bookingController.updateStatus,
+);
+bookingRoutes.patch(
+  '/:id/payment',
+  validate(markPaymentSchema),
+  bookingController.pay,
 );

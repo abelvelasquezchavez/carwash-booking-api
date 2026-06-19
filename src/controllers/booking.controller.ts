@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 import { bookingService } from '../services/booking.service';
+import { paymentService } from '../services/payment.service';
 import type { ListBookingsQuery } from '../schemas/booking.schema';
 
 export const bookingController = {
@@ -25,6 +26,12 @@ export const bookingController = {
   updateStatus: asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const data = await bookingService.updateStatus(id, req.body.status);
+    res.status(200).json({ data });
+  }),
+
+  pay: asyncHandler(async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const data = await paymentService.markAsPaid(id, req.body);
     res.status(200).json({ data });
   }),
 };
