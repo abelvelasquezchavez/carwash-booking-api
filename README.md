@@ -1,5 +1,15 @@
 # 🚿 Car Wash Booking API
 
+## Live demo
+
+The API is deployed on Render with a managed TiDB Cloud (MySQL-compatible) database:
+
+**Base URL:** https://carwash-booking-api.onrender.com/api
+
+Quick check: [`/api/health`](https://carwash-booking-api.onrender.com/api/health)
+
+> Hosted on a free instance — the first request after idle may take ~30–50s to wake the service.
+
 > Production-grade REST API for a **one-provider mobile car wash business**.
 
 This project was built for a very real customer: **my grandfather's home car wash
